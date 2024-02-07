@@ -37,15 +37,49 @@ def test_model(model: Model):
 
     print(bcolors.OKGREEN + "PASSED Test 1: Model's output shapes are correct." + bcolors.OKGREEN)
 
+def play_game(env: JoypadSpace, key_action_mapping: dict):
+    """Plays a Mario game with the gym-super-mario-bros environment
+
+    Parameters:
+        env (JoypadSpace): Instance of environment for Super Mario Bros
+        key_action_mapping (dict): Holds all keystroke to action mappings
+    """
+    pygame.init()
+    screen = pygame.display.set_mode((84, 84))
+    clock = pygame.time.Clock()
+    env.reset()
+
+    last_action = 0
+    while True:
+        action = last_action
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                break
+            if event.type == pygame.KEYDOWN:
+                if event.key in key_action_mapping:
+                    action = key_action_mapping[event.key]
+                    last_action = action    # Debouncing
+            else:
+                last_action = 0
+
+        obs, reward, terminated, truncated, info = env.step(action)
+        clock.tick(60)
+        env.render()
+
+    pygame.quit()
+    env.close()
+
 if __name__ == "__main__":
-    np.bool8 = np.bool_ # Avoid warnings
+    np.bool8 = np.bool_ # Avoid numpy warnings
     num_inputs = 3
     num_actions = 10
     model = Model(num_inputs, num_actions)
     test_model(model)
 
+    # Initialise PyGame and Mario environment
     pygame.init()
-    env = gym_super_mario_bros.make('SuperMarioBros-1-1-v0',
+    env = gym_super_mario_bros.make('SuperMarioBros-8-4-v0',
             apply_api_compatibility=True, render_mode="human")
     env = JoypadSpace(env, SIMPLE_MOVEMENT)
 
@@ -58,29 +92,4 @@ if __name__ == "__main__":
         pygame.K_LEFT: 6,   # Walk left
     }
 
-    screen = pygame.display.set_mode((84, 84))  # NES resolution
-    clock = pygame.time.Clock()
-
-    done = False
-    env.reset()
-    last_action = 0
-
-    while not done:
-        env.render()
-        action = last_action
-
-        for event in pygame.event.get():
-            if event.type == pygame.KEYDOWN:
-                if event.key in key_action_mapping:
-                    action = key_action_mapping[event.key]
-                    last_action = action
-            elif event.type == pygame.QUIT:
-                done = True
-            else:
-                last_action = 0
-
-        obs, reward, terminated, truncated, info = env.step(action)
-        clock.tick(60)
-
-    pygame.quit()
-    env.close()
+    play_game(env, key_action_mapping)
